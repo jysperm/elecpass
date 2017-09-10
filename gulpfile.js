@@ -1,15 +1,11 @@
 const babel = require('gulp-babel');
-const cleanCss = require('gulp-clean-css');
 const gulp = require('gulp');
 const less = require('gulp-less');
 const rename = require('gulp-rename');
-const uglify = require('gulp-uglify');
-const webpack = require('webpack-stream');
 
 gulp.task('styles', () => {
   return gulp.src('styles/main.less')
     .pipe(less({paths: ['node_modules/bootstrap/less']}))
-    .pipe(cleanCss())
     .pipe(rename('bundled.css'))
     .pipe(gulp.dest('public'));
 });
@@ -31,20 +27,10 @@ gulp.task('app', () => {
     .pipe(gulp.dest('public'));
 });
 
-gulp.task('bundled', ['app', 'components'], () => {
-  return gulp.src('public/app.js')
-    .pipe(webpack({
-      output: {
-        filename: 'app.bundled.js'
-      }
-    }))
-    // .pipe(uglify())
-    .pipe(gulp.dest('public'));
-});
-
 gulp.task('watch', ['default'], () => {
-  gulp.watch(['components/*.jsx', 'app/*.js'], ['bundled']);
+  gulp.watch(['app/*.js'], ['app']);
+  gulp.watch(['components/*.jsx'], ['components']);
   gulp.watch(['styles/*.less'], ['styles']);
 });
 
-gulp.task('default', ['bundled', 'styles']);
+gulp.task('default', ['app', 'components', 'styles']);

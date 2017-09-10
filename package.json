@@ -8,13 +8,15 @@
     "bootstrap": "^3.3.7",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
-    "gulp-clean-css": "^3.5.0",
     "gulp-less": "^3.3.2",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^3.0.0",
+    "gulp-rename": "^1.2.2"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "lodash": "^4.17.4",
     "react": "^15.6.1",
-    "react-bootstrap": "^0.31.0",
+    "react-bootstrap": "^0.31.3",
     "react-dom": "^15.6.1",
-    "webpack-stream": "^3.2.0"
+    "walkdir": "^0.0.12"
   }
 }
