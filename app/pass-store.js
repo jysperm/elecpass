@@ -7,11 +7,15 @@ import LRU from 'lru-cache';
 import Promise from 'bluebird';
 import walk from 'walkdir';
 
+import GPGAdapter from './gpg-adapter';
+
 export default class PassStore {
   constructor(options) {
     this.options = _.defaults(options, {
       passStorePath: `${os.homedir()}/.password-store`
     });
+
+    this.gpgAdapter = new GPGAdapter(options);
   }
 
   loadEntries() {
@@ -47,6 +51,14 @@ export default class PassStore {
   filterEntries(entries) {
     return entries.filter( ({realpath}) => {
       return realpath.endsWith('.gpg');
+    });
+  }
+
+  decryptEntry({realpath}) {
+    this.gpgAdapter.decryptFile(realpath).then( ({stdout}) => {
+      alert(stdout);
+    }).catch( err => {
+      alert(`${err.message}: ${err.stderr}`);
     });
   }
 }

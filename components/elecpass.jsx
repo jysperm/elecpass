@@ -26,13 +26,13 @@ export default class ElecpassView extends Component {
 
   render() {
     return <Grid fluid={true}>
-      <Row>
+      <Row className='window-header'>
         <ButtonGroup>
           <Button bsStyle='success'>Insert</Button>
         </ButtonGroup>
       </Row>
-      <Row>
-        <Col md={6} xs={6}>
+      <Row className='window-body'>
+        <Col xs={6}>
           <ListGroup>
             {this.state.entries.map( entry => {
               return <ListGroupItem key={entry.id} onClick={this.onEntrySelected.bind(this, entry)}>
@@ -41,27 +41,27 @@ export default class ElecpassView extends Component {
             })}
           </ListGroup>
         </Col>
-        <Col md={6} xs={6}>
+        <Col xs={6}>
           <Form horizontal>
             <FormGroup>
-              <Col componentClass={ControlLabel} sm={4}>
+              <Col componentClass={ControlLabel} xs={4}>
                 Email
               </Col>
-              <Col sm={8}>
-                <FormControl type="email" placeholder="Email" />
-              </Col>
-            </FormGroup>
-            <FormGroup controlId="formHorizontalPassword">
-              <Col componentClass={ControlLabel} sm={4}>
-                Password
-              </Col>
-              <Col sm={8}>
-                <FormControl type="password" placeholder="Password" />
+              <Col xs={8}>
+                <FormControl type='email' placeholder='Email' />
               </Col>
             </FormGroup>
             <FormGroup>
-              <Col smOffset={4} sm={8}>
-                <Button type="submit">Save</Button>
+              <Col componentClass={ControlLabel} xs={4}>
+                Password
+              </Col>
+              <Col xs={8}>
+                <FormControl type='password' placeholder='Password' />
+              </Col>
+            </FormGroup>
+            <FormGroup>
+              <Col xsOffset={4} xs={8}>
+                <Button>Save</Button>
               </Col>
             </FormGroup>
           </Form>
@@ -72,6 +72,7 @@ export default class ElecpassView extends Component {
 
   onEntrySelected(entry) {
     this.setState({currentEntry: entry});
+    this.passStore.decryptEntry(entry);
   }
 }
 
