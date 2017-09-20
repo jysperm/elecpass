@@ -1,10 +1,11 @@
 import path from 'path';
 
-import React, {Component} from 'react';
-import {Grid, Row, Col} from 'react-bootstrap';
+import _ from 'lodash';
 import {ButtonGroup, Button} from 'react-bootstrap';
-import {ListGroup, ListGroupItem} from 'react-bootstrap';
 import {Form, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
+import {Grid, Row, Col} from 'react-bootstrap';
+import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import React, {Component} from 'react';
 
 import PassStore from '../pass-store';
 
@@ -35,36 +36,40 @@ export default class ElecpassView extends Component {
         <Col xs={6}>
           <ListGroup>
             {this.state.entries.map( entry => {
-              return <ListGroupItem key={entry.id} onClick={this.onEntrySelected.bind(this, entry)}>
-                {entryName(entry)}
+              return <ListGroupItem key={entry.realpath} onClick={this.onEntrySelected.bind(this, entry)}>
+                {entry.name}
               </ListGroupItem>;
             })}
           </ListGroup>
         </Col>
         <Col xs={6}>
-          <Form horizontal>
+          {this.state.currentEntry && <Form>
             <FormGroup>
-              <Col componentClass={ControlLabel} xs={4}>
-                Email
-              </Col>
-              <Col xs={8}>
-                <FormControl type='email' placeholder='Email' />
-              </Col>
+              <ControlLabel>Entry Name</ControlLabel>
+              <FormControl.Static>{this.state.currentEntry.name}</FormControl.Static>
             </FormGroup>
-            <FormGroup>
-              <Col componentClass={ControlLabel} xs={4}>
-                Password
-              </Col>
-              <Col xs={8}>
-                <FormControl type='password' placeholder='Password' />
-              </Col>
-            </FormGroup>
-            <FormGroup>
-              <Col xsOffset={4} xs={8}>
-                <Button>Save</Button>
-              </Col>
-            </FormGroup>
-          </Form>
+
+            {_.map(this.state.currentEntry.metaInfo, (value, key) => {
+              return <FormGroup key={key}>
+                <ControlLabel>{key}</ControlLabel>
+                <FormControl type='text' value={value}/>
+              </FormGroup>
+            })}
+
+            {this.state.currentEntry.password && <FormGroup>
+              <ControlLabel>Password 🔓</ControlLabel>
+              <FormControl type='text' value={this.state.currentEntry.password}/>
+            </FormGroup>}
+
+            {_.map(this.state.currentEntry.extraInfo, (value, key) => {
+              return <FormGroup key={key}>
+                <ControlLabel>{key} 🔓</ControlLabel>
+                <FormControl type='text' value={value}/>
+              </FormGroup>
+            })}
+
+            <Button>Save</Button>
+          </Form>}
         </Col>
       </Row>
     </Grid>;
@@ -72,10 +77,9 @@ export default class ElecpassView extends Component {
 
   onEntrySelected(entry) {
     this.setState({currentEntry: entry});
-    this.passStore.decryptEntry(entry);
-  }
-}
 
-function entryName(entry) {
-  return entry.relativePath.endsWith('.gpg') ? entry.relativePath.slice(0, -'.gpg'.length) : entry.relativePath;
+    this.passStore.decryptEntry(entry).then( decrypted => {
+      this.setState({currentEntry: _.extend(decrypted, entry)});
+    });
+  }
 }

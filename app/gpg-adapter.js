@@ -36,6 +36,6 @@ export default class GPGAdapter {
   }
 
   decryptFile(filename) {
-    return this.spawnGPG(['--decrypt', filename]);
+    return this.spawnGPG(['--decrypt', filename]).get('stdout');
   }
 }

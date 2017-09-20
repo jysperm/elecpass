@@ -19,10 +19,49 @@ export default class PassStore {
   }
 
   loadEntries() {
+    return this.listStoreFiles().then( storeFiles => {
+      const metaFiles = storeFiles.filter( filename => {
+        return filename.endsWith('.meta');
+      });
+
+      return Promise.all(storeFiles.filter( filename => {
+        return filename.endsWith('.gpg');
+      }).map( filename => {
+        return this.loadMetaInfo(metaFiles, filename).then( metaInfo => {
+          const relativePath = resolveRelativePath(this.options.passStorePath, filename);
+
+          return {
+            name: relativePath.slice(0, -'.gpg'.length),
+            realpath: filename,
+            metaInfo: metaInfo,
+            relativePath: relativePath
+          };
+        });
+      }));
+    });
+  }
+
+  loadMetaInfo(metaFiles, entryFilename) {
+    return Promise.try( () => {
+      const metaFilename = entryFilename.slice(0, -'.gpg'.length) + '.meta';
+
+      if (_.includes(metaFiles, metaFilename)) {
+        return Promise.fromCallback( callback => {
+          fs.readFile(metaFilename, callback);
+        }).then( buffer => {
+          return parseMeta(buffer.toString());
+        });
+      } else {
+        return {};
+      }
+    })
+  }
+
+  listStoreFiles() {
     const {passStorePath} = this.options;
 
     return new Promise( (resolve, reject) => {
-      const entries = [];
+      const files = [];
 
       const events = walk(passStorePath, {follow_symlinks: true}, function(filename, stat) {
         if (filename.endsWith('.git')) {
@@ -30,16 +69,12 @@ export default class PassStore {
         }
 
         if (stat.isFile()) {
-          entries.push({
-            id: filename,
-            realpath: filename,
-            relativePath: resolveRelativePath(passStorePath, filename)
-          });
+          files.push(filename);
         }
       });
 
       events.on('end', () => {
-        resolve(this.filterEntries(entries));
+        resolve(files);
       });
 
       events.on('error', (path, err) => {
@@ -48,17 +83,9 @@ export default class PassStore {
     });
   }
 
-  filterEntries(entries) {
-    return entries.filter( ({realpath}) => {
-      return realpath.endsWith('.gpg');
-    });
-  }
-
   decryptEntry({realpath}) {
-    this.gpgAdapter.decryptFile(realpath).then( ({stdout}) => {
-      alert(stdout);
-    }).catch( err => {
-      alert(`${err.message}: ${err.stderr}`);
+    return this.gpgAdapter.decryptFile(realpath).then( body => {
+      return parseEntry(body)
     });
   }
 }
@@ -73,4 +100,21 @@ function resolveRelativePath(from, to) {
   }
 
   return path.relative(realpath, to);
+}
+
+function parseEntry(body) {
+  const [__, password, rest] = body.match(/^([^\n]+)([\S\s]*)/);
+
+  return {
+    password: password,
+    extraInfo: parseMeta(rest)
+  };
+}
+
+function parseMeta(body) {
+  return _.fromPairs(_.compact(body.split(/\n/).map( line => {
+    return line.trim();
+  })).map( line => {
+    return line.match(/(^\s*[^:]+):\s*(.*)/).slice(1);
+  }));
 }
