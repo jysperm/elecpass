@@ -7,6 +7,7 @@ import LRU from 'lru-cache';
 import Promise from 'bluebird';
 import walk from 'walkdir';
 
+import {endsWithNewLine} from './utils';
 import GPGAdapter from './gpg-adapter';
 
 export default class PassStore {
@@ -15,7 +16,9 @@ export default class PassStore {
       passStorePath: `${os.homedir()}/.password-store`
     });
 
-    this.gpgAdapter = new GPGAdapter(options);
+    this.gpgAdapter = new GPGAdapter(_.defaults(options, {
+      gpgIdFile: path.join(this.options.passStorePath, '.gpg-id')
+    }));
   }
 
   loadEntries() {
@@ -88,6 +91,17 @@ export default class PassStore {
       return parseEntry(body)
     });
   }
+
+  encryptAndWriteEntry({name, password, extraInfo, metaInfo}) {
+    const entryFilename = path.join(this.options.passStorePath, `${name}.gpg`);
+    const metaFilename = path.join(this.options.passStorePath, `${name}.meta`);
+
+    return this.gpgAdapter.encryptAndWrite(entryFilename, encodeEntry({password, extraInfo})).then( () => {
+      return Promise.fromCallback( callback => {
+        fs.writeFile(metaFilename, endsWithNewLine(encodeMeta(metaInfo)), callback);
+      });
+    });
+  }
 }
 
 const realpathCache = LRU();
@@ -117,4 +131,14 @@ function parseMeta(body) {
   })).map( line => {
     return line.match(/(^\s*[^:]+):\s*(.*)/).slice(1);
   }));
+}
+
+function encodeEntry({password, extraInfo}) {
+  return `${password}\n` + encodeMeta(extraInfo);
+}
+
+function encodeMeta(metaInfo) {
+  return _.map(metaInfo, (value, key) => {
+    return `${key}: ${value}`
+  }).join('\n');
 }

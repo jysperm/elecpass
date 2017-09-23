@@ -1,8 +1,8 @@
 import path from 'path';
 
 import _ from 'lodash';
-import {ButtonGroup, Button} from 'react-bootstrap';
-import {Form, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
+import {ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
+import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-bootstrap';
 import {Grid, Row, Col} from 'react-bootstrap';
 import {ListGroup, ListGroupItem} from 'react-bootstrap';
 import React, {Component} from 'react';
@@ -14,8 +14,11 @@ export default class ElecpassView extends Component {
     super(props);
 
     this.state = {
+      creating: false,
+      currentEntry: null,
+      editingEntry: {},
       entries: [],
-      currentEntry: null
+      newFieldName: ''
     };
 
     this.passStore = new PassStore();
@@ -28,8 +31,13 @@ export default class ElecpassView extends Component {
   render() {
     return <Grid fluid={true}>
       <Row className='window-header'>
-        <ButtonGroup>
-          <Button bsStyle='success'>Insert</Button>
+        <ButtonGroup className='pull-left'>
+          <Button bsStyle='success' onClick={this.onInsertEntry.bind(this)}>Insert</Button>
+          <Button bsStyle='info'>Pull</Button>
+          <Button bsStyle='info'>Push</Button>
+        </ButtonGroup>
+        <ButtonGroup className='pull-right'>
+          <Button bsStyle='danger'>Remove</Button>
         </ButtonGroup>
       </Row>
       <Row className='window-body'>
@@ -46,40 +54,98 @@ export default class ElecpassView extends Component {
           {this.state.currentEntry && <Form>
             <FormGroup>
               <ControlLabel>Entry Name</ControlLabel>
-              <FormControl.Static>{this.state.currentEntry.name}</FormControl.Static>
+              <FormControl type='text' {...this.linkField('name')}/>
             </FormGroup>
 
-            {_.map(this.state.currentEntry.metaInfo, (value, key) => {
+            {this.mapFields('metaInfo', (value, key) => {
               return <FormGroup key={key}>
                 <ControlLabel>{key}</ControlLabel>
-                <FormControl type='text' value={value}/>
+                <FormControl type='text' {...this.linkField(`metaInfo.${key}`)}/>
               </FormGroup>
             })}
 
-            {this.state.currentEntry.password && <FormGroup>
+            <FormGroup>
               <ControlLabel>Password 🔓</ControlLabel>
-              <FormControl type='text' value={this.state.currentEntry.password}/>
-            </FormGroup>}
+              <FormControl type='text' {...this.linkField('password')}/>
+            </FormGroup>
 
-            {_.map(this.state.currentEntry.extraInfo, (value, key) => {
+            {this.mapFields('extraInfo', (value, key) => {
               return <FormGroup key={key}>
                 <ControlLabel>{key} 🔓</ControlLabel>
-                <FormControl type='text' value={value}/>
+                <FormControl type='text' {...this.linkField(`extraInfo.${key}`)}/>
               </FormGroup>
             })}
 
-            <Button>Save</Button>
+            <FormGroup>
+              <InputGroup>
+                <DropdownButton id='add-field' componentClass={InputGroup.Button} title='Add ...'>
+                  <MenuItem onClick={this.onAddFieldClicked.bind(this, true)}>Encrypted Field</MenuItem>
+                  <MenuItem onClick={this.onAddFieldClicked.bind(this, false)}>Unencrypted Field</MenuItem>
+                </DropdownButton>
+                <FormControl type='text' value={this.state.newFieldName} placeholder='Some feild name'
+                  onChange={({target: {value}}) => this.setState({newFieldName: value})} />
+              </InputGroup>
+            </FormGroup>
+
+            <ButtonGroup>
+              <Button bsStyle={_.isEmpty(this.state.editingEntry) ? 'default' : 'primary'}
+                onClick={this.onSaveClicked.bind(this)}>Save</Button>
+            </ButtonGroup>
           </Form>}
         </Col>
       </Row>
     </Grid>;
   }
 
+  linkField(field) {
+    return {
+      value: _.get(this.state.editingEntry, field) || _.get(this.state.currentEntry, field) || '',
+      onChange: ({target}) => {
+        this.setState(_.set(this.state.editingEntry, field, target.value));
+      }
+    };
+  }
+
+  mapFields(type, fn) {
+    return _.map(_.extend({}, this.state.currentEntry[type], this.state.editingEntry[type]), fn);
+  }
+
+  onInsertEntry() {
+    this.setState({
+      creating: true,
+      currentEntry: {},
+      editingEntry: {}
+    });
+  }
+
+  onAddFieldClicked(encrypted) {
+    if (this.state.newFieldName) {
+      const field = encrypted ? 'extraInfo' : 'metaInfo';
+
+      this.setState({
+        newFieldName: '',
+        editingEntry: _.extend(this.state.editingEntry, {
+          [field]: _.extend(this.state.editingEntry[field], {
+            [this.state.newFieldName]: ''
+          })
+        })
+      });
+    }
+  }
+
+  onSaveClicked() {
+    this.passStore.encryptAndWriteEntry(_.extend({}, this.state.currentEntry, this.state.editingEntry));
+  }
+
   onEntrySelected(entry) {
     this.setState({currentEntry: entry});
 
     this.passStore.decryptEntry(entry).then( decrypted => {
-      this.setState({currentEntry: _.extend(decrypted, entry)});
+      this.setState({
+        creating: false,
+        currentEntry: _.extend(decrypted, entry),
+        editingEntry: {}
+      });
     });
   }
 }
