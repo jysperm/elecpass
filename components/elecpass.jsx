@@ -39,6 +39,19 @@ export default class ElecpassView extends Component {
         });
       }
     });
+
+    this.passStore.on('entry-removed', ({name}) => {
+      this.setState({
+        entries: _.reject(this.state.entries, {name})
+      });
+
+      if (this.state.currentEntry && this.state.currentEntry.name == name) {
+        this.setState({
+          creating: false,
+          currentEntry: null
+        });
+      }
+    });
   }
 
   render() {
@@ -50,7 +63,7 @@ export default class ElecpassView extends Component {
           <Button bsStyle='info'>Push</Button>
         </ButtonGroup>
         <ButtonGroup className='pull-right'>
-          <Button bsStyle='danger'>Remove</Button>
+          {this.state.currentEntry && <Button bsStyle='danger' onClick={this.onRemoveEntry.bind(this)}>Remove</Button>}
         </ButtonGroup>
       </Row>
       <Row className='window-body'>
@@ -131,6 +144,10 @@ export default class ElecpassView extends Component {
       currentEntry: {},
       editingEntry: {}
     });
+  }
+
+  onRemoveEntry() {
+    this.passStore.removeEntry(this.state.currentEntry).catch(alert);
   }
 
   onAddFieldClicked(encrypted) {

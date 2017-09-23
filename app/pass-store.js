@@ -114,6 +114,23 @@ export default class PassStore extends EventEmitter {
       });
     });
   }
+
+  removeEntry({name}) {
+    const entryFilename = path.join(this.options.passStorePath, `${name}.gpg`);
+    const metaFilename = path.join(this.options.passStorePath, `${name}.meta`);
+
+    return Promise.all([entryFilename, metaFilename].map( filename => {
+      return Promise.fromCallback( callback => {
+        fs.unlink(filename, callback);
+      }).catch( err => {
+        if (err.code !== 'ENOENT') {
+          throw err;
+        }
+      });
+    })).then( () => {
+      this.emit('entry-removed', {name});
+    });
+  }
 }
 
 const realpathCache = LRU();
