@@ -19,7 +19,8 @@ export default class ElecpassView extends Component {
       editingEntry: {},
       entries: [],
       newFieldName: '',
-      savingEntry: false
+      savingEntry: false,
+      repoStatus: null
     };
 
     this.passStore = new PassStore();
@@ -52,15 +53,36 @@ export default class ElecpassView extends Component {
         });
       }
     });
+
+    this.passStore.on('repo-status-changed', repoStatus => {
+      this.setState({repoStatus});
+    });
+
+    this.passStore.on('require-gpg-id', () => {
+      this.passStore.gpgAdapter.setGPGId(prompt('Input your GPG public key, like 5A804BF5')).catch(alert);
+    });
+
+    this.passStore.on('error', err => {
+      alert(err.message);
+    });
   }
 
   render() {
+    const {repoStatus} = this.state;
+
     return <Grid fluid={true}>
       <Row className='window-header'>
         <ButtonGroup className='pull-left'>
           <Button bsStyle='success' onClick={this.onInsertEntry.bind(this)}>Insert</Button>
-          <Button bsStyle='info'>Pull</Button>
-          <Button bsStyle='info'>Push</Button>
+          {repoStatus && repoStatus.isGitRepo && <Button bsStyle='info' onClick={this.onGitPull.bind(this)}>
+            Git Pull{repoStatus.behind > 0 ? ` (${repoStatus.behind})` : ''}
+          </Button>}
+          {repoStatus && repoStatus.isGitRepo && <Button bsStyle='info' onClick={this.onGitPush.bind(this)}>
+            Git Push{repoStatus.ahead > 0 ? ` (${repoStatus.ahead})` : ''}
+          </Button>}
+          {repoStatus && repoStatus.isGitRepo === false && <Button bsStyle='info' onClick={this.onGitInit.bind(this)}>
+            Init Git Repo
+          </Button>}
         </ButtonGroup>
         <ButtonGroup className='pull-right'>
           {this.state.currentEntry && <Button bsStyle='danger' onClick={this.onRemoveEntry.bind(this)}>Remove</Button>}
@@ -187,5 +209,23 @@ export default class ElecpassView extends Component {
         editingEntry: {}
       });
     }).catch(alert);
+  }
+
+  onGitInit() {
+    this.passStore.gitAdapter.initRepo().then( () => {
+      return this.passStore.loadRepoStatus();
+    }).catch(alert);
+  }
+
+  onGitPull() {
+    this.passStore.gitAdapter.pullRemote().then( () => {
+      this.passStore.loadEntries().then( entries => {
+        this.setState({entries});
+      });
+    }).catch(alert);
+  }
+
+  onGitPush() {
+    this.passStore.gitAdapter.pushRemote().catch(alert);
   }
 }

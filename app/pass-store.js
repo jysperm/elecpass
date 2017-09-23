@@ -9,6 +9,7 @@ import Promise from 'bluebird';
 import walk from 'walkdir';
 
 import {endsWithNewLine} from './utils';
+import GitAdapter from './git-adapter';
 import GPGAdapter from './gpg-adapter';
 
 export default class PassStore extends EventEmitter {
@@ -19,9 +20,31 @@ export default class PassStore extends EventEmitter {
       passStorePath: `${os.homedir()}/.password-store`
     });
 
-    this.gpgAdapter = new GPGAdapter(_.defaults(options, {
+    try {
+      fs.mkdirSync(this.options.passStorePath);
+    } catch (err) {
+      if (err.code !== 'EEXIST') {
+        throw err;
+      }
+    }
+
+    this.gpgAdapter = new GPGAdapter(_.defaults(this.options, {
       gpgIdFile: path.join(this.options.passStorePath, '.gpg-id')
     }));
+
+    this.gitAdapter = new GitAdapter(this.options);
+
+    this.loadRepoStatus();
+
+    Promise.fromCallback( callback => {
+      fs.stat(this.options.gpgIdFile, callback);
+    }).catch( err => {
+      if (err.code === 'ENOENT') {
+        this.emit('require-gpg-id');
+      } else {
+        this.emit('error', err);
+      }
+    });
   }
 
   loadEntries() {
@@ -44,6 +67,12 @@ export default class PassStore extends EventEmitter {
           };
         });
       }));
+    });
+  }
+
+  loadRepoStatus() {
+    this.gitAdapter.getRepoStatus().then( repoStatus => {
+      this.emit('repo-status-changed', repoStatus);
     });
   }
 
