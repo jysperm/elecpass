@@ -11,7 +11,8 @@ import {endsWithNewLine} from './utils';
 export default class GPGAdapter {
   constructor(options) {
     this.options = _.defaults(options, {
-      gpgBinary: 'gpg'
+      gpgBinary: 'gpg',
+      gpgParams: ['--yes']
     });
 
     this.gpgId = Promise.fromCallback( callback => {
@@ -23,7 +24,7 @@ export default class GPGAdapter {
 
   spawnGPG(args, stdin) {
     return new Promise( (resolve, reject) => {
-      const gpgProcess = spawn(this.options.gpgBinary, args);
+      const gpgProcess = spawn(this.options.gpgBinary, _.concat(this.options.gpgParams, args));
 
       let stdout = '';
       let stderr = '';

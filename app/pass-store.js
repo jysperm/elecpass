@@ -1,3 +1,4 @@
+import EventEmitter from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -10,8 +11,10 @@ import walk from 'walkdir';
 import {endsWithNewLine} from './utils';
 import GPGAdapter from './gpg-adapter';
 
-export default class PassStore {
+export default class PassStore extends EventEmitter {
   constructor(options) {
+    super();
+
     this.options = _.defaults(options, {
       passStorePath: `${os.homedir()}/.password-store`
     });
@@ -88,7 +91,7 @@ export default class PassStore {
 
   decryptEntry({realpath}) {
     return this.gpgAdapter.decryptFile(realpath).then( body => {
-      return parseEntry(body)
+      return parseEntry(body);
     });
   }
 
@@ -100,6 +103,15 @@ export default class PassStore {
       return Promise.fromCallback( callback => {
         fs.writeFile(metaFilename, endsWithNewLine(encodeMeta(metaInfo)), callback);
       });
+    }).then( () => {
+      this.emit('entry-changed', {
+        name: name,
+        password: password,
+        realpath: fs.realpathSync(entryFilename), // TODO: Use fs.realpath instead
+        relativePath: `${name}.gpg`,
+        extraInfo: extraInfo,
+        metaInfo: metaInfo
+      });
     });
   }
 }
@@ -110,6 +122,7 @@ function resolveRelativePath(from, to) {
   let realpath = realpathCache.get(from);
 
   if (!realpath) {
+    // TODO: Use fs.realpath instead
     realpath = fs.realpathSync(from);
   }
 

@@ -18,13 +18,26 @@ export default class ElecpassView extends Component {
       currentEntry: null,
       editingEntry: {},
       entries: [],
-      newFieldName: ''
+      newFieldName: '',
+      savingEntry: false
     };
 
     this.passStore = new PassStore();
 
     this.passStore.loadEntries().then( entries => {
       this.setState({entries});
+    });
+
+    this.passStore.on('entry-changed', entry => {
+      this.setState({
+        entries: _.concat(entry, _.reject(this.state.entries, {name: entry.name}))
+      });
+
+      if (this.state.currentEntry && this.state.currentEntry.name == entry.name) {
+        this.setState({
+          currentEntry: entry
+        });
+      }
     });
   }
 
@@ -43,8 +56,8 @@ export default class ElecpassView extends Component {
       <Row className='window-body'>
         <Col xs={6}>
           <ListGroup>
-            {this.state.entries.map( entry => {
-              return <ListGroupItem key={entry.realpath} onClick={this.onEntrySelected.bind(this, entry)}>
+            {_.sortBy(this.state.entries, 'name').map( entry => {
+              return <ListGroupItem key={entry.name} onClick={this.onEntrySelected.bind(this, entry)}>
                 {entry.name}
               </ListGroupItem>;
             })}
@@ -54,25 +67,25 @@ export default class ElecpassView extends Component {
           {this.state.currentEntry && <Form>
             <FormGroup>
               <ControlLabel>Entry Name</ControlLabel>
-              <FormControl type='text' {...this.linkField('name')}/>
+              <FormControl type='text' {...this.linkEntryField('name')}/>
             </FormGroup>
 
             {this.mapFields('metaInfo', (value, key) => {
               return <FormGroup key={key}>
                 <ControlLabel>{key}</ControlLabel>
-                <FormControl type='text' {...this.linkField(`metaInfo.${key}`)}/>
+                <FormControl type='text' {...this.linkEntryField(`metaInfo.${key}`)}/>
               </FormGroup>
             })}
 
             <FormGroup>
               <ControlLabel>Password 🔓</ControlLabel>
-              <FormControl type='text' {...this.linkField('password')}/>
+              <FormControl type='text' {...this.linkEntryField('password')}/>
             </FormGroup>
 
             {this.mapFields('extraInfo', (value, key) => {
               return <FormGroup key={key}>
                 <ControlLabel>{key} 🔓</ControlLabel>
-                <FormControl type='text' {...this.linkField(`extraInfo.${key}`)}/>
+                <FormControl type='text' {...this.linkEntryField(`extraInfo.${key}`)}/>
               </FormGroup>
             })}
 
@@ -89,7 +102,7 @@ export default class ElecpassView extends Component {
 
             <ButtonGroup>
               <Button bsStyle={_.isEmpty(this.state.editingEntry) ? 'default' : 'primary'}
-                onClick={this.onSaveClicked.bind(this)}>Save</Button>
+                disabled={this.state.savingEntry} onClick={this.onSaveClicked.bind(this)}>Save</Button>
             </ButtonGroup>
           </Form>}
         </Col>
@@ -97,11 +110,13 @@ export default class ElecpassView extends Component {
     </Grid>;
   }
 
-  linkField(field) {
+  linkEntryField(field) {
     return {
       value: _.get(this.state.editingEntry, field) || _.get(this.state.currentEntry, field) || '',
       onChange: ({target}) => {
-        this.setState(_.set(this.state.editingEntry, field, target.value));
+        if (!this.state.savingEntry) {
+          this.setState(_.set(this.state.editingEntry, field, target.value));
+        }
       }
     };
   }
@@ -134,7 +149,15 @@ export default class ElecpassView extends Component {
   }
 
   onSaveClicked() {
-    this.passStore.encryptAndWriteEntry(_.extend({}, this.state.currentEntry, this.state.editingEntry));
+    this.setState({savingEntry: true});
+
+    this.passStore.encryptAndWriteEntry(_.extend({}, this.state.currentEntry, this.state.editingEntry)).then( () => {
+      this.setState({
+        savingEntry: false,
+        creating: false,
+        editingEntry: {}
+      });
+    }).catch(alert);
   }
 
   onEntrySelected(entry) {
@@ -146,6 +169,6 @@ export default class ElecpassView extends Component {
         currentEntry: _.extend(decrypted, entry),
         editingEntry: {}
       });
-    });
+    }).catch(alert);
   }
 }
