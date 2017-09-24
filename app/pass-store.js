@@ -128,10 +128,20 @@ export default class PassStore extends EventEmitter {
     const entryFilename = path.join(this.options.passStorePath, `${name}.gpg`);
     const metaFilename = path.join(this.options.passStorePath, `${name}.meta`);
 
+    const metaFileContent = encodeMeta(metaInfo);
+
     return this.gpgAdapter.encryptAndWrite(entryFilename, encodeEntry({password, extraInfo})).then( () => {
-      return Promise.fromCallback( callback => {
-        fs.writeFile(metaFilename, endsWithNewLine(encodeMeta(metaInfo)), callback);
-      });
+      if (metaFileContent) {
+        return Promise.fromCallback( callback => {
+          fs.writeFile(metaFilename, endsWithNewLine(metaFileContent), callback);
+        });
+      }
+    }).then( () => {
+      return this.gitAdapter.commitFiles(_.compact([
+        entryFilename, metaFileContent ? metaFileContent : null
+      ]), `Update ${name}`);
+    }).then( () => {
+      return this.loadRepoStatus();
     }).then( () => {
       this.emit('entry-changed', {
         name: name,
@@ -157,6 +167,10 @@ export default class PassStore extends EventEmitter {
         }
       });
     })).then( () => {
+      return this.gitAdapter.commitFiles([], `Remove ${name}`);
+    }).then( () => {
+      this.loadRepoStatus();
+    }).then( () => {
       this.emit('entry-removed', {name});
     });
   }

@@ -45,6 +45,16 @@ export default class GitAdapter {
     });
   }
 
+  commitFiles(files, message) {
+    return Promise.try( () => {
+      if (!_.isEmpty(files)) {
+        return this.spawnGit(['add', ...files]);
+      }
+    }).then( () => {
+      this.spawnGit(['commit', '-a', '-m', message]);
+    });
+  }
+
   initRepo() {
     return this.spawnGit(['init']).then( () => {
       return Promise.fromCallback( callback => {

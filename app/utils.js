@@ -4,6 +4,8 @@ import _ from 'lodash';
 import Promise from 'bluebird';
 
 export function spawn(command, args, stdin, options) {
+  console.log(command, ...args);
+
   return new Promise( (resolve, reject) => {
     const child = childProcess.spawn(command, args, options);
 
