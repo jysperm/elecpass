@@ -1,8 +1,13 @@
 {
   "name": "elecpass",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "main.js",
   "description": "A password manager based on GPG and Git compatible with pass",
+  "author": "Wang Ziting <jysperm@gmail.com> (https://jysperm.me)",
+  "scripts": {
+    "test": "ava",
+    "dist": "electron-builder"
+  },
   "dependencies": {
     "bluebird": "^3.5.0",
     "lodash": "^4.17.4",
@@ -18,9 +23,14 @@
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-es2015": "^6.24.1",
     "bootstrap": "^3.3.7",
+    "electron-builder": "^19.30.1",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-less": "^3.3.2",
     "gulp-rename": "^1.2.2"
+  },
+  "build": {
+    "appId": "io.elecpass.app",
+    "productName": "Elecpass"
   }
 }
