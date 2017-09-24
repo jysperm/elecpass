@@ -40,7 +40,7 @@ export default class GPGAdapter {
   }
 
   encryptAndWrite(filename, content) {
-    return this.gpgId.then( gpgId => {
+    return this.gpgId().then( gpgId => {
       return mkdirp(path.dirname(filename)).then( () => {
         return this.spawnGPG(['--encrypt', '-r', gpgId, '-o', filename], endsWithNewLine(content));
       });

@@ -5,6 +5,7 @@ import {ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-bootstrap';
 import {Grid, Row, Col} from 'react-bootstrap';
 import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Modal} from 'react-bootstrap';
 import React, {Component} from 'react';
 
 import PassStore from '../pass-store';
@@ -20,7 +21,9 @@ export default class ElecpassView extends Component {
       entries: [],
       newFieldName: '',
       savingEntry: false,
-      repoStatus: null
+      repoStatus: null,
+      setGPGIdModal: false,
+      gpgId: ''
     };
 
     this.passStore = new PassStore();
@@ -59,7 +62,9 @@ export default class ElecpassView extends Component {
     });
 
     this.passStore.on('require-gpg-id', () => {
-      this.passStore.gpgAdapter.setGPGId(prompt('Input your GPG public key, like 5A804BF5')).catch(alert);
+      this.setState({
+        setGPGIdModal: true
+      });
     });
 
     this.passStore.on('error', err => {
@@ -142,6 +147,23 @@ export default class ElecpassView extends Component {
           </Form>}
         </Col>
       </Row>
+
+      {this.state.setGPGIdModal && <Modal show={true} onHide={() => this.setState({setGPGIdModal: false})}>
+        <Modal.Header closeButton>
+          <Modal.Title>Set your GPG public key, like 5A804BF5</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <FormGroup>
+              <ControlLabel>GPG Id</ControlLabel>
+              <FormControl type='text' onChange={({target: {value}}) => this.setState({gpgId: value})}/>
+            </FormGroup>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={this.onSaveGPGIdClicked.bind(this)}>Save</Button>
+        </Modal.Footer>
+      </Modal>}
     </Grid>;
   }
 
@@ -208,6 +230,12 @@ export default class ElecpassView extends Component {
         currentEntry: _.extend(decrypted, entry),
         editingEntry: {}
       });
+    }).catch(alert);
+  }
+
+  onSaveGPGIdClicked() {
+    this.passStore.gpgAdapter.setGPGId(this.state.gpgId).then( () => {
+      this.setState({setGPGIdModal: false});
     }).catch(alert);
   }
 
