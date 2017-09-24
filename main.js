@@ -1,10 +1,33 @@
-const {app, BrowserWindow} = require('electron')
+const {app, shell, BrowserWindow, Menu} = require('electron')
 const path = require('path')
 const url = require('url')
 
 let win
 
+process.env.PATH = `${process.env.PATH}:/usr/local/bin`
+
+const menu = Menu.buildFromTemplate([
+  {
+    label: app.getName(),
+    submenu: [{
+      label: 'About',
+      click() {
+        shell.openExternal('https://github.com/jysperm/elecpass')
+      }
+    },{
+      label: 'Open DevTools',
+      click() {
+        win.webContents.openDevTools()
+      }
+    },{
+      role: 'quit'
+    }]
+  }
+])
+
 function createWindow () {
+  Menu.setApplicationMenu(menu)
+
   win = new BrowserWindow({width: 650, height: 450})
 
   win.loadURL(url.format({
