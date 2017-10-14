@@ -1,6 +1,7 @@
 import childProcess from 'child_process';
 
 import _ from 'lodash';
+import otplib from 'otplib';
 import Promise from 'bluebird';
 
 export function spawn(command, args, stdin, options) {
@@ -34,6 +35,10 @@ export function spawn(command, args, stdin, options) {
       }
     });
   });
+}
+
+export function generateTOTPToken(secret) {
+  return otplib.authenticator.generate(secret);
 }
 
 export function endsWithNewLine(content) {

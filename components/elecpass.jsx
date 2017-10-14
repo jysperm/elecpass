@@ -9,6 +9,7 @@ import {Modal} from 'react-bootstrap';
 import React, {Component} from 'react';
 
 import PassStore from '../pass-store';
+import TOTPTokenButton from './totp-token';
 
 export default class ElecpassView extends Component {
   constructor(props) {
@@ -123,10 +124,22 @@ export default class ElecpassView extends Component {
             </FormGroup>
 
             {this.mapFields('extraInfo', (value, key) => {
-              return <FormGroup key={key}>
-                <ControlLabel>{key} 🔓</ControlLabel>
-                <FormControl type='text' {...this.linkEntryField(`extraInfo.${key}`)}/>
-              </FormGroup>
+              if (key === 'TOTP') {
+                return <FormGroup key={key}>
+                  <ControlLabel>{key} 🔓</ControlLabel>
+                    <InputGroup>
+                      <InputGroup.Button>
+                        <TOTPTokenButton secret={value} />
+                      </InputGroup.Button>
+                      <FormControl type='text' {...this.linkEntryField(`extraInfo.${key}`)}/>
+                    </InputGroup>
+                </FormGroup>;
+              } else {
+                return <FormGroup key={key}>
+                  <ControlLabel>{key} 🔓</ControlLabel>
+                  <FormControl type='text' {...this.linkEntryField(`extraInfo.${key}`)}/>
+                </FormGroup>;
+              }
             })}
 
             <FormGroup>
@@ -134,6 +147,7 @@ export default class ElecpassView extends Component {
                 <DropdownButton id='add-field' componentClass={InputGroup.Button} title='Add ...'>
                   <MenuItem onClick={this.onAddFieldClicked.bind(this, true)}>Encrypted Field</MenuItem>
                   <MenuItem onClick={this.onAddFieldClicked.bind(this, false)}>Unencrypted Field</MenuItem>
+                  <MenuItem onClick={this.onAddTOTPFieldClicked.bind(this)}>TOTP Field</MenuItem>
                 </DropdownButton>
                 <FormControl type='text' value={this.state.newFieldName} placeholder='Some feild name'
                   onChange={({target: {value}}) => this.setState({newFieldName: value})} />
@@ -203,6 +217,18 @@ export default class ElecpassView extends Component {
         editingEntry: _.extend(this.state.editingEntry, {
           [field]: _.extend(this.state.editingEntry[field], {
             [this.state.newFieldName]: ''
+          })
+        })
+      });
+    }
+  }
+
+  onAddTOTPFieldClicked() {
+    if (!this.state.editingEntry.TOTP) {
+      this.setState({
+        editingEntry: _.extend(this.state.editingEntry, {
+          extraInfo: _.extend(this.state.editingEntry.extraInfo, {
+            TOTP: ''
           })
         })
       });

@@ -3227,6 +3227,12 @@ osenv@^0.1.4:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
+otplib@^7.0.0-0:
+  version "7.0.0-0"
+  resolved "https://registry.yarnpkg.com/otplib/-/otplib-7.0.0-0.tgz#88040a081f98e0913837aad0758ba371e6487d2b"
+  dependencies:
+    thirty-two "1.0.2"
+
 p-finally@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/p-finally/-/p-finally-1.0.0.tgz#3fbcfb15b899a44123b34b6dcc18b724336a2cae"
@@ -4161,6 +4167,10 @@ term-size@^1.2.0:
 text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
+
+thirty-two@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/thirty-two/-/thirty-two-1.0.2.tgz#4ca2fffc02a51290d2744b9e3f557693ca6b627a"
 
 throttleit@0.0.2:
   version "0.0.2"
