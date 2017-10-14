@@ -1,9 +1,10 @@
+import {clipboard} from 'electron';
 import path from 'path';
 
 import _ from 'lodash';
 import {ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-bootstrap';
-import {Grid, Row, Col} from 'react-bootstrap';
+import {Grid, Row, Col, Glyphicon} from 'react-bootstrap';
 import {ListGroup, ListGroupItem} from 'react-bootstrap';
 import {Modal} from 'react-bootstrap';
 import React, {Component} from 'react';
@@ -120,7 +121,14 @@ export default class ElecpassView extends Component {
 
             <FormGroup>
               <ControlLabel>Password 🔓</ControlLabel>
-              <FormControl type='text' {...this.linkEntryField('password')}/>
+                <InputGroup>
+                  <FormControl type='text' {...this.linkEntryField('password')}/>
+                  <InputGroup.Button>
+                    <Button onClick={this.onCopyToClipboard.bind(this, this.linkEntryField('password').value)}>
+                      <Glyphicon glyph='copy' />
+                    </Button>
+                  </InputGroup.Button>
+                </InputGroup>
             </FormGroup>
 
             {this.mapFields('extraInfo', (value, key) => {
@@ -164,7 +172,7 @@ export default class ElecpassView extends Component {
 
       {this.state.setGPGIdModal && <Modal show={true} onHide={() => this.setState({setGPGIdModal: false})}>
         <Modal.Header closeButton>
-          <Modal.Title>Set your GPG public key, like 5A804BF5</Modal.Title>
+          <Modal.Title>Set your GPG public key, like `5A804BF5`</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -233,6 +241,10 @@ export default class ElecpassView extends Component {
         })
       });
     }
+  }
+
+  onCopyToClipboard(text) {
+    clipboard.writeText(text);
   }
 
   onSaveClicked() {

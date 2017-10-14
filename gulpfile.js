@@ -3,11 +3,16 @@ const gulp = require('gulp');
 const less = require('gulp-less');
 const rename = require('gulp-rename');
 
-gulp.task('styles', () => {
+gulp.task('styles', ['fonts'], () => {
   return gulp.src('styles/main.less')
     .pipe(less({paths: ['node_modules/bootstrap/less']}))
     .pipe(rename('bundled.css'))
-    .pipe(gulp.dest('public'));
+    .pipe(gulp.dest('public/styles'));
+});
+
+gulp.task('fonts', () => {
+  return gulp.src('node_modules/bootstrap/dist/fonts/*')
+    .pipe(gulp.dest('public/fonts'));
 });
 
 gulp.task('components', () => {
