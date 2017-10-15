@@ -17,7 +17,7 @@ export default class GitAdapter {
 
   spawnGit(args, stdin, options) {
     return spawn(this.options.gitBinary, args, stdin, _.defaults(options, {
-      cwd: this.options.passStorePath
+      cwd: path.resolve(this.options.passStorePath)
     }));
   }
 

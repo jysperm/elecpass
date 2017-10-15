@@ -5,7 +5,7 @@ import otplib from 'otplib';
 import Promise from 'bluebird';
 
 export function spawn(command, args, stdin, options) {
-  console.log(command, ...args);
+  console.log('[spawn]', command, ...args);
 
   return new Promise( (resolve, reject) => {
     const child = childProcess.spawn(command, args, options);

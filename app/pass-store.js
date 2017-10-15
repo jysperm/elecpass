@@ -17,7 +17,8 @@ export default class PassStore extends EventEmitter {
     super();
 
     this.options = _.defaults(options, {
-      passStorePath: `${os.homedir()}/.password-store`
+      passStorePath: `${os.homedir()}/.password-store`,
+      disableAutoCommit: false
     });
 
     try {
@@ -125,8 +126,8 @@ export default class PassStore extends EventEmitter {
   }
 
   encryptAndWriteEntry({name, password, extraInfo, metaInfo}) {
-    const entryFilename = path.join(this.options.passStorePath, `${name}.gpg`);
-    const metaFilename = path.join(this.options.passStorePath, `${name}.meta`);
+    const entryFilename = path.resolve(path.join(this.options.passStorePath, `${name}.gpg`));
+    const metaFilename = path.resolve(path.join(this.options.passStorePath, `${name}.meta`));
 
     const metaFileContent = encodeMeta(metaInfo);
 
@@ -137,9 +138,11 @@ export default class PassStore extends EventEmitter {
         });
       }
     }).then( () => {
-      return this.gitAdapter.commitFiles(_.compact([
-        entryFilename, metaFileContent ? metaFileContent : null
-      ]), `Update ${name}`);
+      if (!this.options.disableAutoCommit) {
+        return this.gitAdapter.commitFiles(_.compact([
+          entryFilename, metaFileContent ? metaFilename : null
+        ]), `Update ${name}`);
+      }
     }).then( () => {
       return this.loadRepoStatus();
     }).then( () => {
@@ -167,7 +170,9 @@ export default class PassStore extends EventEmitter {
         }
       });
     })).then( () => {
-      return this.gitAdapter.commitFiles([], `Remove ${name}`);
+      if (!this.options.disableAutoCommit) {
+        return this.gitAdapter.commitFiles([], `Remove ${name}`);
+      }
     }).then( () => {
       this.loadRepoStatus();
     }).then( () => {

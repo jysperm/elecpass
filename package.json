@@ -5,8 +5,9 @@
   "description": "A password manager based on GPG and Git compatible with pass",
   "author": "Wang Ziting <jysperm@gmail.com> (https://jysperm.me)",
   "scripts": {
-    "test": "ava",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "coverage-report": "nyc report --reporter=html",
+    "test": "nyc ava"
   },
   "dependencies": {
     "bluebird": "^3.5.0",
@@ -28,7 +29,9 @@
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-less": "^3.3.2",
-    "gulp-rename": "^1.2.2"
+    "gulp-rename": "^1.2.2",
+    "nyc": "^11.2.1",
+    "rmdir": "^1.2.0"
   },
   "build": {
     "appId": "io.elecpass.app",
