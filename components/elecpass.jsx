@@ -11,6 +11,7 @@ import React, {Component} from 'react';
 
 import PassStore from '../pass-store';
 import TOTPTokenButton from './totp-token';
+import {generatePassword} from '../utils';
 
 export default class ElecpassView extends Component {
   constructor(props) {
@@ -126,6 +127,9 @@ export default class ElecpassView extends Component {
                   <InputGroup.Button>
                     <Button onClick={this.onCopyToClipboard.bind(this, this.linkEntryField('password').value)}>
                       <Glyphicon glyph='copy' />
+                    </Button>
+                    <Button onClick={this.onRandomPasswordClicked.bind(this, 'password')}>
+                      <Glyphicon glyph='random' />
                     </Button>
                   </InputGroup.Button>
                 </InputGroup>
@@ -245,6 +249,10 @@ export default class ElecpassView extends Component {
 
   onCopyToClipboard(text) {
     clipboard.writeText(text);
+  }
+
+  onRandomPasswordClicked(field) {
+    this.setState(_.set(this.state.editingEntry, field, generatePassword()));
   }
 
   onSaveClicked() {

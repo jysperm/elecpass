@@ -1,8 +1,11 @@
 import childProcess from 'child_process';
 
 import _ from 'lodash';
+import Chance from 'chance';
 import otplib from 'otplib';
 import Promise from 'bluebird';
+
+const chance = new Chance();
 
 export function spawn(command, args, stdin, options) {
   console.log('[spawn]', command, ...args);
@@ -39,6 +42,15 @@ export function spawn(command, args, stdin, options) {
 
 export function generateTOTPToken(secret) {
   return otplib.authenticator.generate(secret);
+}
+
+export function generatePassword(options) {
+  options = _.defaults(options, {
+    pool: 'abcdefghjkmnpqrtuvwxyzABCDEFGHJKMNPQRTUVWXYZ2346789!@#$%^&*-+=|?',
+    length: 16
+  });
+
+  return chance.string(options);
 }
 
 export function endsWithNewLine(content) {
