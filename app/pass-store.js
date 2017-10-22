@@ -36,16 +36,6 @@ export default class PassStore extends EventEmitter {
     this.gitAdapter = new GitAdapter(this.options);
 
     this.loadRepoStatus();
-
-    Promise.fromCallback( callback => {
-      fs.stat(this.options.gpgIdFile, callback);
-    }).catch( err => {
-      if (err.code === 'ENOENT') {
-        this.emit('require-gpg-id');
-      } else {
-        this.emit('error', err);
-      }
-    });
   }
 
   loadEntries() {

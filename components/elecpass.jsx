@@ -6,12 +6,12 @@ import {ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-bootstrap';
 import {Grid, Row, Col, Glyphicon} from 'react-bootstrap';
 import {ListGroup, ListGroupItem} from 'react-bootstrap';
-import {Modal} from 'react-bootstrap';
 import React, {Component} from 'react';
 
+import {generatePassword} from '../utils';
+import InputModal from './input-modal';
 import PassStore from '../pass-store';
 import TOTPTokenButton from './totp-token';
-import {generatePassword} from '../utils';
 
 export default class ElecpassView extends Component {
   constructor(props) {
@@ -24,9 +24,10 @@ export default class ElecpassView extends Component {
       entries: [],
       newFieldName: '',
       savingEntry: false,
+
       repoStatus: null,
-      setGPGIdModal: false,
-      gpgId: ''
+      gpgId: '',
+      settingGPGId: false
     };
 
     this.passStore = new PassStore();
@@ -64,14 +65,20 @@ export default class ElecpassView extends Component {
       this.setState({repoStatus});
     });
 
-    this.passStore.on('require-gpg-id', () => {
-      this.setState({
-        setGPGIdModal: true
-      });
-    });
-
     this.passStore.on('error', err => {
       alert(err.message);
+    });
+
+    this.passStore.gpgAdapter.gpgId().then( gpgId => {
+      this.setState({gpgId});
+    }).catch( err => {
+      if (err.code === 'ENOENT') {
+        this.setState({
+          settingGPGId: true
+        });
+      } else {
+        alert(err.message);
+      }
     });
   }
 
@@ -88,9 +95,11 @@ export default class ElecpassView extends Component {
           {repoStatus && repoStatus.isGitRepo && <Button bsStyle='info' onClick={this.onGitPush.bind(this)}>
             Git Push{repoStatus.ahead > 0 ? ` (${repoStatus.ahead})` : ''}
           </Button>}
-          {repoStatus && repoStatus.isGitRepo === false && <Button bsStyle='info' onClick={this.onGitInit.bind(this)}>
-            Init Git Repo
-          </Button>}
+          <DropdownButton bsStyle='warning' title='' id='extra-settings'>
+            {repoStatus && repoStatus.isGitRepo === false && <MenuItem onClick={this.onGitInit.bind(this)}>Init Git Repo</MenuItem>}
+            <MenuItem eventKey='set-remote-repo'>Set Remote Repo</MenuItem>
+            <MenuItem eventKey='set-gpg-id' onClick={() => {this.setState({settingGPGId: true})}}>Set GPG Id ({this.state.gpgId})</MenuItem>
+          </DropdownButton>
         </ButtonGroup>
         <ButtonGroup className='pull-right'>
           {this.state.currentEntry && <Button bsStyle='danger' onClick={this.onRemoveEntry.bind(this)}>Remove</Button>}
@@ -174,22 +183,10 @@ export default class ElecpassView extends Component {
         </Col>
       </Row>
 
-      {this.state.setGPGIdModal && <Modal show={true} onHide={() => this.setState({setGPGIdModal: false})}>
-        <Modal.Header closeButton>
-          <Modal.Title>Set your GPG public key, like `5A804BF5`</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <FormGroup>
-              <ControlLabel>GPG Id</ControlLabel>
-              <FormControl type='text' onChange={({target: {value}}) => this.setState({gpgId: value})}/>
-            </FormGroup>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={this.onSaveGPGIdClicked.bind(this)}>Save</Button>
-        </Modal.Footer>
-      </Modal>}
+      {this.state.settingGPGId && <InputModal onClose={this.onModalClose.bind(this)}
+        onConfirm={this.onSaveGPGId.bind(this)} field='GPG Id' value={this.state.gpgId}>
+          Set your GPG public key, like `5A804BF5`
+      </InputModal>}
     </Grid>;
   }
 
@@ -279,10 +276,19 @@ export default class ElecpassView extends Component {
     }).catch(alert);
   }
 
-  onSaveGPGIdClicked() {
-    this.passStore.gpgAdapter.setGPGId(this.state.gpgId).then( () => {
-      this.setState({setGPGIdModal: false});
+  onSaveGPGId(gpgId) {
+    this.passStore.gpgAdapter.setGPGId(gpgId).then( () => {
+      this.setState({
+        gpgId: gpgId,
+        settingGPGId: false
+      });
     }).catch(alert);
+  }
+
+  onModalClose() {
+    this.setState({
+      settingGPGId: false
+    });
   }
 
   onGitInit() {
