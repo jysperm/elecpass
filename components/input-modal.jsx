@@ -6,7 +6,8 @@ export default class InputModal extends Component {
     super(props)
 
     this.state = {
-      value: props.value
+      value: props.value,
+      confirming: false
     };
   }
 
@@ -24,12 +25,13 @@ export default class InputModal extends Component {
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button bsStyle='primary' onClick={this.onConfirm.bind(this)}>Confirm</Button>
+        <Button bsStyle='primary' onClick={this.onConfirm.bind(this)} disabled={this.state.confirming}>Confirm</Button>
       </Modal.Footer>
     </Modal>;
   }
 
   onConfirm() {
+    this.setState({confirming: true})
     this.props.onConfirm(this.state.value);
   }
 }

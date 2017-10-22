@@ -5,7 +5,7 @@ import _ from 'lodash';
 import {ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-bootstrap';
 import {Grid, Row, Col, Glyphicon} from 'react-bootstrap';
-import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import {ListGroup, ListGroupItem, Alert} from 'react-bootstrap';
 import React, {Component} from 'react';
 
 import {generatePassword} from '../utils';
@@ -26,6 +26,7 @@ export default class ElecpassView extends Component {
       savingEntry: false,
 
       repoStatus: null,
+      settingRemoteRepo: false,
       gpgId: '',
       settingGPGId: false
     };
@@ -87,18 +88,27 @@ export default class ElecpassView extends Component {
 
     return <Grid fluid={true}>
       <Row className='window-header'>
+        {(!repoStatus || !repoStatus.remoteRepo) && <Alert bsStyle='warning'>
+          We recommend you <strong>Init Git Repo</strong> and <strong>Set Remote Repo</strong> to sync your entries.
+        </Alert>}
         <ButtonGroup className='pull-left'>
           <Button bsStyle='success' onClick={this.onInsertEntry.bind(this)}>Insert</Button>
-          {repoStatus && repoStatus.isGitRepo && <Button bsStyle='info' onClick={this.onGitPull.bind(this)}>
+          {repoStatus && repoStatus.remoteRepo && <Button bsStyle='info' onClick={this.onGitPull.bind(this)}>
             Git Pull{repoStatus.behind > 0 ? ` (${repoStatus.behind})` : ''}
           </Button>}
-          {repoStatus && repoStatus.isGitRepo && <Button bsStyle='info' onClick={this.onGitPush.bind(this)}>
+          {repoStatus && repoStatus.remoteRepo && <Button bsStyle='info' onClick={this.onGitPush.bind(this)}>
             Git Push{repoStatus.ahead > 0 ? ` (${repoStatus.ahead})` : ''}
           </Button>}
           <DropdownButton bsStyle='warning' title='' id='extra-settings'>
-            {repoStatus && repoStatus.isGitRepo === false && <MenuItem onClick={this.onGitInit.bind(this)}>Init Git Repo</MenuItem>}
-            <MenuItem eventKey='set-remote-repo'>Set Remote Repo</MenuItem>
-            <MenuItem eventKey='set-gpg-id' onClick={() => {this.setState({settingGPGId: true})}}>Set GPG Id ({this.state.gpgId})</MenuItem>
+            {repoStatus && repoStatus.isGitRepo === false && <MenuItem eventKey='init-git-repo' onClick={this.onGitInit.bind(this)}>
+              Init Git Repo
+            </MenuItem>}
+            <MenuItem eventKey='set-remote-repo' onClick={() => {this.setState({settingRemoteRepo: true})}}>
+              Set Remote Repo ({repoStatus && repoStatus.remoteRepo})
+            </MenuItem>
+            <MenuItem eventKey='set-gpg-id' onClick={() => {this.setState({settingGPGId: true})}}>
+              Set GPG Id ({this.state.gpgId})
+            </MenuItem>
           </DropdownButton>
         </ButtonGroup>
         <ButtonGroup className='pull-right'>
@@ -186,6 +196,12 @@ export default class ElecpassView extends Component {
       {this.state.settingGPGId && <InputModal onClose={this.onModalClose.bind(this)}
         onConfirm={this.onSaveGPGId.bind(this)} field='GPG Id' value={this.state.gpgId}>
           Set your GPG public key, like `5A804BF5`
+      </InputModal>}
+
+      {this.state.settingRemoteRepo && <InputModal onClose={this.onModalClose.bind(this)}
+        onConfirm={this.onSaveRemoteRepo.bind(this)} field='Remote Repo'
+        value={this.state.remoteRepo && this.state.remoteRepo.remoteRepo}>
+          Set your Git remote repo, like `git@github.com:jysperm/passwords.git`
       </InputModal>}
     </Grid>;
   }
@@ -285,9 +301,19 @@ export default class ElecpassView extends Component {
     }).catch(alert);
   }
 
+  onSaveRemoteRepo(remoteRepo) {
+    this.passStore.gitAdapter.setRemoteRepo(remoteRepo).then( () => {
+      this.setState({
+        repoStatus: _.extend(this.state.repoStatus, {remoteRepo}),
+        settingRemoteRepo: false
+      });
+    }).catch(alert);
+  }
+
   onModalClose() {
     this.setState({
-      settingGPGId: false
+      settingGPGId: false,
+      settingRemoteRepo: false
     });
   }
 

@@ -30,6 +30,18 @@ export default class GitAdapter {
         behind: parseInt(behind),
         ahead: parseInt(ahead)
       };
+    }).then( result => {
+      return this.spawnGit(['remote', 'get-url', 'origin']).then( ({stdout}) => {
+        return _.extend(result, {
+          remoteRepo: stdout.trim()
+        });
+      }).catch( err => {
+        if (err.stderr.match(/No such remote/)) {
+          return result;
+        } else {
+          throw err;
+        }
+      });
     }).catch( err => {
       if (err.stderr.match(/no upstream configured/)) {
         return {
@@ -64,6 +76,14 @@ export default class GitAdapter {
       }).then( () => {
         return this.spawnGit(['commit', '-m', ':tada: Init PassStore']);
       });
+    });
+  }
+
+  setRemoteRepo(remoteRepo) {
+    return this.spawnGit(['remote', 'remove', 'origin']).catch( err => {
+      console.log('[setRemoteRepo]', err);
+    }).then( () => {
+      return this.spawnGit(['remote', 'add', '--fetch', '--master', 'master', 'origin', remoteRepo]);
     });
   }
 
