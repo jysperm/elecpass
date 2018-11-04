@@ -5,7 +5,7 @@ import _ from 'lodash';
 import {ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-bootstrap';
 import {Grid, Row, Col, Glyphicon} from 'react-bootstrap';
-import {ListGroup, ListGroupItem, Alert} from 'react-bootstrap';
+import {Alert} from 'react-bootstrap';
 import React, {Component} from 'react';
 
 import {generatePassword} from '../../common/utils';
@@ -13,6 +13,7 @@ import {generatePassword} from '../../common/utils';
 import InputModal from './input-modal';
 import PassStore from '../../common/pass-store';
 import TOTPTokenButton from './totp-token';
+import EntriesList from './entries-list';
 
 export default class ElecpassView extends Component {
   constructor(props) {
@@ -118,13 +119,7 @@ export default class ElecpassView extends Component {
       </Row>
       <Row className='window-body'>
         <Col xs={6}>
-          <ListGroup>
-            {_.sortBy(this.state.entries, 'name').map( entry => {
-              return <ListGroupItem key={entry.name} onClick={this.onEntrySelected.bind(this, entry)}>
-                {entry.name}
-              </ListGroupItem>;
-            })}
-          </ListGroup>
+          <EntriesList entries={this.state.entries} onEntrySelected={this.onEntrySelected.bind(this)} />
         </Col>
         <Col xs={6}>
           {this.state.currentEntry && <Form>
@@ -333,6 +328,8 @@ export default class ElecpassView extends Component {
   }
 
   onGitPush() {
-    this.passStore.gitAdapter.pushRemote().catch(alert);
+    this.passStore.gitAdapter.pushRemote().then( () => {
+      return this.passStore.loadRepoStatus();
+    }).catch(alert);
   }
 }

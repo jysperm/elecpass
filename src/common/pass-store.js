@@ -49,9 +49,11 @@ export default class PassStore extends EventEmitter {
       }).map( filename => {
         return this.loadMetaInfo(metaFiles, filename).then( metaInfo => {
           const relativePath = resolveRelativePath(this.options.passStorePath, filename);
+          const name = relativePath.slice(0, -'.gpg'.length);
 
           return {
-            name: relativePath.slice(0, -'.gpg'.length),
+            name: name,
+            lowerCase: name.toLowerCase(),
             realpath: filename,
             metaInfo: metaInfo,
             relativePath: relativePath
