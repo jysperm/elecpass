@@ -1,41 +1,50 @@
-const babel = require('gulp-babel');
 const gulp = require('gulp');
-const less = require('gulp-less');
-const rename = require('gulp-rename');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const named = require('vinyl-named');
+const webpack = require('webpack-stream');
 
-gulp.task('styles', ['fonts'], () => {
-  return gulp.src('styles/main.less')
-    .pipe(less({paths: ['node_modules/bootstrap/less']}))
-    .pipe(rename('bundled.css'))
-    .pipe(gulp.dest('public/styles'));
-});
-
-gulp.task('fonts', () => {
-  return gulp.src('node_modules/bootstrap/dist/fonts/*')
-    .pipe(gulp.dest('public/fonts'));
-});
-
-gulp.task('components', () => {
-  return gulp.src('components/*.jsx')
-    .pipe(babel({
-      presets: ['es2015'],
-      plugins: ['transform-react-jsx']
-    }))
-    .pipe(gulp.dest('public/components'));
-});
-
-gulp.task('app', () => {
-  return gulp.src('app/*.js')
-    .pipe(babel({
-      presets: ['es2015']
+gulp.task('renderer', () => {
+  return gulp.src(['src/renderer/app.js'])
+    .pipe(named())
+    .pipe(webpack({
+      mode: process.env.NODE_ENV || 'development',
+      target: 'electron-renderer',
+      resolve: {
+        extensions: ['.wasm', '.mjs', '.js', '.jsx', '.json', '.less']
+      },
+      module: {
+        rules: [
+          {
+            test: /\.m?jsx?$/,
+            exclude: /node_modules/,
+            loader: 'babel-loader'
+          }, {
+            test: /\.less$/,
+            loader: [MiniCssExtractPlugin.loader, 'css-loader', 'less-loader']
+          }, {
+            test: /\.(woff2?|ttf|eot|svg)$/,
+            loader: 'url-loader'
+          }, {
+            test: /\.html$/,
+            loader: 'file-loader',
+            options: {
+              useRelativePath: true,
+              name: '[name].[ext]',
+            },
+          }
+        ]
+      },
+      plugins: [
+        new MiniCssExtractPlugin({
+          filename: "[name].css"
+        })
+      ]
     }))
     .pipe(gulp.dest('public'));
 });
 
 gulp.task('watch', ['default'], () => {
-  gulp.watch(['app/*.js'], ['app']);
-  gulp.watch(['components/*.jsx'], ['components']);
-  gulp.watch(['styles/*.less'], ['styles']);
+  gulp.watch(['src/**/*.js', 'src/**/*.jsx', 'src/**/*.less', 'src/**/*.html'], ['renderer']);
 });
 
-gulp.task('default', ['app', 'components', 'styles']);
+gulp.task('default', ['renderer']);

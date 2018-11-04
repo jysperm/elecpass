@@ -6,7 +6,7 @@ import Promise from 'bluebird';
 import rmdir from 'rmdir';
 import test from 'ava';
 
-import GitAdapter from '../public/git-adapter';
+import GitAdapter from '../src/common/git-adapter';
 
 const testRepo = `${os.tmpdir()}/elecpass-repo`
 

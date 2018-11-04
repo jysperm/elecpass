@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import test from 'ava';
 
-import PassStore from '../public/pass-store';
+import PassStore from '../src/common/pass-store';
 
 const passStore = new PassStore({
   passStorePath: 'examples',

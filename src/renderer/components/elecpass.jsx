@@ -8,9 +8,10 @@ import {Grid, Row, Col, Glyphicon} from 'react-bootstrap';
 import {ListGroup, ListGroupItem, Alert} from 'react-bootstrap';
 import React, {Component} from 'react';
 
-import {generatePassword} from '../utils';
+import {generatePassword} from '../../common/utils';
+
 import InputModal from './input-modal';
-import PassStore from '../pass-store';
+import PassStore from '../../common/pass-store';
 import TOTPTokenButton from './totp-token';
 
 export default class ElecpassView extends Component {

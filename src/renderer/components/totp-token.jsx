@@ -3,7 +3,7 @@ import {clipboard} from 'electron';
 import {Button} from 'react-bootstrap';
 import React, {Component} from 'react';
 
-import {generateTOTPToken} from '../utils';
+import {generateTOTPToken} from '../../common/utils';
 
 export default class TOTPTokenButton extends Component {
   componentDidMount() {

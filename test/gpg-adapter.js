@@ -3,7 +3,7 @@ import fs from 'fs';
 import Promise from 'bluebird';
 import test from 'ava';
 
-import GPGAdapter from '../public/gpg-adapter';
+import GPGAdapter from '../src/common/gpg-adapter';
 
 const gpgAdapter = new GPGAdapter({
   gpgIdFile: `examples/.gpg-id`
