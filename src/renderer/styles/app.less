@@ -1,28 +1,55 @@
 @import '~bootstrap/less/bootstrap';
 
-.window-header {
-  margin: 1em 0;
+.window-root {
+  display: flex;
+  flex-flow: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 1em;
+
+  .window-body {
+    display: flex;
+    margin: 0 -1em -1em -1em;
+
+    .section {
+      flex: 1;
+      display: flex;
+      margin: 1em;
+
+      .expand {
+        flex: 1;
+      }
+
+      .shrink {
+        flex: 0;
+      }
+
+      .scroller {
+        overflow-y: auto;
+      }
+    }
+
+    .column-container {
+      display: flex;
+      flex-flow: column;
+    }
+  }
 }
 
 .window-body {
-  .input-group-btn:first-child > .btn {
-    margin-right: -2px;
-  }
-
-  .fixed-list {
-    position: fixed;
-    bottom: 1em;
-    top: 4em;
-    width: 50%;
-    padding-right: 30px;
-
-    input {
+  .section {
+    .shrink input {
       margin-bottom: .5em;
     }
 
-    .entry-list {
-      overflow-y: auto;
-      height: 100%;
+    .scroller .list-group {
+      margin: 0;
+    }
+
+    .scroller form {
+      margin-right: .5em;
     }
   }
 }

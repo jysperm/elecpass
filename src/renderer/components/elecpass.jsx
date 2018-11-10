@@ -1,4 +1,3 @@
-import {clipboard} from 'electron';
 import path from 'path';
 
 import _ from 'lodash';
@@ -8,12 +7,11 @@ import {Grid, Row, Col, Glyphicon} from 'react-bootstrap';
 import {Alert} from 'react-bootstrap';
 import React, {Component} from 'react';
 
-import {generatePassword} from '../../common/utils';
-
 import InputModal from './input-modal';
 import PassStore from '../../common/pass-store';
 import TOTPTokenButton from './totp-token';
 import EntriesList from './entries-list';
+import EntryEditor from './entry-editor';
 
 export default class ElecpassView extends Component {
   constructor(props) {
@@ -22,10 +20,7 @@ export default class ElecpassView extends Component {
     this.state = {
       creating: false,
       currentEntry: null,
-      editingEntry: {},
       entries: [],
-      newFieldName: '',
-      savingEntry: false,
 
       repoStatus: null,
       settingRemoteRepo: false,
@@ -88,8 +83,8 @@ export default class ElecpassView extends Component {
   render() {
     const {repoStatus} = this.state;
 
-    return <Grid fluid={true}>
-      <Row className='window-header'>
+    return <div className='window-root'>
+      <div className='window-header'>
         {(!repoStatus || !repoStatus.remoteRepo) && <Alert bsStyle='warning'>
           We recommend you <strong>Init Git Repo</strong> and <strong>Set Remote Repo</strong> to sync your entries.
         </Alert>}
@@ -101,7 +96,8 @@ export default class ElecpassView extends Component {
           {repoStatus && repoStatus.remoteRepo && <Button bsStyle='info' onClick={this.onGitPush.bind(this)}>
             Git Push{repoStatus.ahead > 0 ? ` (${repoStatus.ahead})` : ''}
           </Button>}
-          <DropdownButton bsStyle='warning' title='' id='extra-settings'>
+          <Button bsStyle='warning' onClick={this.onLock.bind(this)}>Lock</Button>
+          <DropdownButton id='extra-settings' title=''>
             {repoStatus && repoStatus.isGitRepo === false && <MenuItem eventKey='init-git-repo' onClick={this.onGitInit.bind(this)}>
               Init Git Repo
             </MenuItem>}
@@ -116,78 +112,15 @@ export default class ElecpassView extends Component {
         <ButtonGroup className='pull-right'>
           {this.state.currentEntry && <Button bsStyle='danger' onClick={this.onRemoveEntry.bind(this)}>Remove</Button>}
         </ButtonGroup>
-      </Row>
-      <Row className='window-body'>
-        <Col xs={6}>
+      </div>
+      <div className='window-body'>
+        <div className='section'>
           <EntriesList entries={this.state.entries} onEntrySelected={this.onEntrySelected.bind(this)} />
-        </Col>
-        <Col xs={6}>
-          {this.state.currentEntry && <Form>
-            <FormGroup>
-              <ControlLabel>Entry Name</ControlLabel>
-              <FormControl type='text' {...this.linkEntryField('name')}/>
-            </FormGroup>
-
-            {this.mapFields('metaInfo', (value, key) => {
-              return <FormGroup key={key}>
-                <ControlLabel>{key}</ControlLabel>
-                <FormControl type='text' {...this.linkEntryField(`metaInfo.${key}`)}/>
-              </FormGroup>
-            })}
-
-            <FormGroup>
-              <ControlLabel>Password 🔓</ControlLabel>
-                <InputGroup>
-                  <FormControl type='text' {...this.linkEntryField('password')}/>
-                  <InputGroup.Button>
-                    <Button onClick={this.onCopyToClipboard.bind(this, this.linkEntryField('password').value)}>
-                      <Glyphicon glyph='copy' />
-                    </Button>
-                    <Button onClick={this.onRandomPasswordClicked.bind(this, 'password')}>
-                      <Glyphicon glyph='random' />
-                    </Button>
-                  </InputGroup.Button>
-                </InputGroup>
-            </FormGroup>
-
-            {this.mapFields('extraInfo', (value, key) => {
-              if (key === 'TOTP') {
-                return <FormGroup key={key}>
-                  <ControlLabel>{key} 🔓</ControlLabel>
-                    <InputGroup>
-                      <InputGroup.Button>
-                        <TOTPTokenButton secret={value} />
-                      </InputGroup.Button>
-                      <FormControl type='text' {...this.linkEntryField(`extraInfo.${key}`)}/>
-                    </InputGroup>
-                </FormGroup>;
-              } else {
-                return <FormGroup key={key}>
-                  <ControlLabel>{key} 🔓</ControlLabel>
-                  <FormControl type='text' {...this.linkEntryField(`extraInfo.${key}`)}/>
-                </FormGroup>;
-              }
-            })}
-
-            <FormGroup>
-              <InputGroup>
-                <DropdownButton id='add-field' componentClass={InputGroup.Button} title='Add ...'>
-                  <MenuItem onClick={this.onAddFieldClicked.bind(this, true)}>Encrypted Field</MenuItem>
-                  <MenuItem onClick={this.onAddFieldClicked.bind(this, false)}>Unencrypted Field</MenuItem>
-                  <MenuItem onClick={this.onAddTOTPFieldClicked.bind(this)}>TOTP Field</MenuItem>
-                </DropdownButton>
-                <FormControl type='text' value={this.state.newFieldName} placeholder='Some feild name'
-                  onChange={({target: {value}}) => this.setState({newFieldName: value})} />
-              </InputGroup>
-            </FormGroup>
-
-            <ButtonGroup>
-              <Button bsStyle={_.isEmpty(this.state.editingEntry) ? 'default' : 'primary'}
-                disabled={this.state.savingEntry} onClick={this.onSaveClicked.bind(this)}>Save</Button>
-            </ButtonGroup>
-          </Form>}
-        </Col>
-      </Row>
+        </div>
+        <div className='section'>
+          <EntryEditor entry={this.state.currentEntry} />
+        </div>
+      </div>
 
       {this.state.settingGPGId && <InputModal onClose={this.onModalClose.bind(this)}
         onConfirm={this.onSaveGPGId.bind(this)} field='GPG Id' value={this.state.gpgId}>
@@ -199,22 +132,7 @@ export default class ElecpassView extends Component {
         value={this.state.remoteRepo && this.state.remoteRepo.remoteRepo}>
           Set your Git remote repo, like `git@github.com:jysperm/passwords.git`
       </InputModal>}
-    </Grid>;
-  }
-
-  linkEntryField(field) {
-    return {
-      value: _.get(this.state.editingEntry, field) || _.get(this.state.currentEntry, field) || '',
-      onChange: ({target}) => {
-        if (!this.state.savingEntry) {
-          this.setState(_.set(this.state.editingEntry, field, target.value));
-        }
-      }
-    };
-  }
-
-  mapFields(type, fn) {
-    return _.map(_.extend({}, this.state.currentEntry[type], this.state.editingEntry[type]), fn);
+    </div>
   }
 
   onInsertEntry() {
@@ -222,6 +140,12 @@ export default class ElecpassView extends Component {
       creating: true,
       currentEntry: {},
       editingEntry: {}
+    });
+  }
+
+  onLock() {
+    this.setState({
+      currentEntry: null
     });
   }
 
@@ -254,26 +178,6 @@ export default class ElecpassView extends Component {
         })
       });
     }
-  }
-
-  onCopyToClipboard(text) {
-    clipboard.writeText(text);
-  }
-
-  onRandomPasswordClicked(field) {
-    this.setState(_.set(this.state.editingEntry, field, generatePassword()));
-  }
-
-  onSaveClicked() {
-    this.setState({savingEntry: true});
-
-    this.passStore.encryptAndWriteEntry(_.extend({}, this.state.currentEntry, this.state.editingEntry)).then( () => {
-      this.setState({
-        savingEntry: false,
-        creating: false,
-        editingEntry: {}
-      });
-    }).catch(alert);
   }
 
   onEntrySelected(entry) {
