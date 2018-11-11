@@ -1,21 +1,24 @@
 # Elecpass
 A password manager based on GPG and Git compatible with pass.
 
-Built with Electron, React and Bootstrap, your can download from [Releases](https://github.com/jysperm/elecpass/releases), only macOS verison available at this time.
+Built with Electron, React and Bootstrap, your can download from [Releases](https://github.com/jysperm/elecpass/releases), macOS and Windows version are available.
 
 You should **setup GnuPG and Git into `$PATH` environment variable** before using Elecpass.
 
+Elecpass is open source and no any tracking code installed.
+
 ## Screenshots
 
-![elecpass](https://user-images.githubusercontent.com/1191561/31860425-7e65605a-b6df-11e7-97d1-adac1f0afdc8.png)
+![elecpass-v3](https://user-images.githubusercontent.com/1191561/48311152-7bf1b400-e5d6-11e8-8044-7d7ada91f78d.png)
 
 ## Tested Platforms
 
-- macOS Sierra 10.12.6, 10.13
-- Electron 1.6.15
-- GnuPG 2.0.30, 2.2.1
-- Git 2.11.0, 2.13.5
+- macOS 10.13.6
+- Electron 3.0.8
+- GnuPG 2.2.10
+- Git 2.17.1
 
 ## References
 
+- [Elecpass on GitHub](https://github.com/jysperm/elecpass)
 - [Pass: The Standard Unix Password Manager](https://www.passwordstore.org/)

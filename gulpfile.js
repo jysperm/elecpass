@@ -1,5 +1,5 @@
 const gulp = require('gulp');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const named = require('vinyl-named');
 const webpack = require('webpack-stream');
 

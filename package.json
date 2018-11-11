@@ -1,11 +1,12 @@
 {
   "name": "elecpass",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "main": "src/main/app.js",
   "homepage": "http://elecpass.io",
   "description": "A password manager based on GPG and Git compatible with pass",
   "author": "Wang Ziting <jysperm@gmail.com> (https://jysperm.me)",
   "scripts": {
+    "build": "gulp",
     "dist": "electron-builder",
     "coverage-report": "nyc report --reporter=html",
     "test": "nyc ava"

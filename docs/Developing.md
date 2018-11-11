@@ -13,6 +13,11 @@ brew install nodejs yarn
 brew cask install electron
 ```
 
+Install them on Windows:
+
+- Download and install [Node.js](https://nodejs.org)
+- Download and install [Yarn](https://yarnpkg.com)
+
 ## Build & Run
 
 - `yarn install`
@@ -26,8 +31,9 @@ Enable React debug:
 
 ## Run tests
 
-- `yarn test` or `yarn run coverage-report`
+- `yarn test` and `yarn run coverage-report`
 
 ## Release
 
+- `yarn build`
 - `yarn dist`
