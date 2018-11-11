@@ -18,7 +18,6 @@ export default class ElecpassView extends Component {
     super(props);
 
     this.state = {
-      creating: false,
       currentEntry: null,
       entries: [],
 
@@ -53,7 +52,6 @@ export default class ElecpassView extends Component {
 
       if (this.state.currentEntry && this.state.currentEntry.name == name) {
         this.setState({
-          creating: false,
           currentEntry: null
         });
       }
@@ -115,10 +113,11 @@ export default class ElecpassView extends Component {
       </div>
       <div className='window-body'>
         <div className='section'>
-          <EntriesList entries={this.state.entries} onEntrySelected={this.onEntrySelected.bind(this)} />
+          <EntriesList entries={this.state.entries}onEntrySelected={this.onEntrySelected.bind(this)} />
         </div>
         <div className='section'>
-          <EntryEditor entry={this.state.currentEntry} />
+          <EntryEditor key={this.state.currentEntry && this.state.currentEntry.name} entry={this.state.currentEntry}
+            onEntrySaved={this.onEntrySaved.bind(this)} onEntryRenamed={this.onEntryRenamed.bind(this)} />
         </div>
       </div>
 
@@ -137,9 +136,7 @@ export default class ElecpassView extends Component {
 
   onInsertEntry() {
     this.setState({
-      creating: true,
-      currentEntry: {},
-      editingEntry: {}
+      currentEntry: {}
     });
   }
 
@@ -149,47 +146,26 @@ export default class ElecpassView extends Component {
     });
   }
 
-  onRemoveEntry() {
-    this.passStore.removeEntry(this.state.currentEntry).catch(alert);
-  }
-
-  onAddFieldClicked(encrypted) {
-    if (this.state.newFieldName) {
-      const field = encrypted ? 'extraInfo' : 'metaInfo';
-
-      this.setState({
-        newFieldName: '',
-        editingEntry: _.extend(this.state.editingEntry, {
-          [field]: _.extend(this.state.editingEntry[field], {
-            [this.state.newFieldName]: ''
-          })
-        })
-      });
-    }
-  }
-
-  onAddTOTPFieldClicked() {
-    if (!this.state.editingEntry.TOTP) {
-      this.setState({
-        editingEntry: _.extend(this.state.editingEntry, {
-          extraInfo: _.extend(this.state.editingEntry.extraInfo, {
-            TOTP: ''
-          })
-        })
-      });
-    }
-  }
-
   onEntrySelected(entry) {
     this.setState({currentEntry: entry});
 
     this.passStore.decryptEntry(entry).then( decrypted => {
       this.setState({
-        creating: false,
-        currentEntry: _.extend(decrypted, entry),
-        editingEntry: {}
+        currentEntry: _.extend(decrypted, entry)
       });
     }).catch(alert);
+  }
+
+  onRemoveEntry() {
+    this.passStore.removeEntry(this.state.currentEntry).catch(alert);
+  }
+
+  onEntrySaved(entry) {
+    return this.passStore.encryptAndWriteEntry(entry)
+  }
+
+  onEntryRenamed(originalName, entry) {
+    return this.passStore.renameEntry(originalName, entry)
   }
 
   onSaveGPGId(gpgId) {

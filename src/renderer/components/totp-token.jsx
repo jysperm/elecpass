@@ -1,6 +1,7 @@
 import {clipboard} from 'electron';
 
 import {Button} from 'react-bootstrap';
+import PropTypes from 'prop-types'
 import React, {Component} from 'react';
 
 import {generateTOTPToken} from '../../common/utils';
@@ -29,4 +30,8 @@ export default class TOTPTokenButton extends Component {
   onCopyToClipboard(text) {
     clipboard.writeText(text);
   }
+}
+
+TOTPTokenButton.propTypes = {
+  secret: PropTypes.string.isRequired
 }

@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
 import {generatePassword} from '../../common/utils'
+import TOTPTokenButton from './totp-token'
 
 export default class EditorField extends Component {
   constructor(props) {

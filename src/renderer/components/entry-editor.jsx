@@ -3,6 +3,7 @@ import {Form, FormGroup, FormControl, ControlLabel, InputGroup} from 'react-boot
 import {Glyphicon} from 'react-bootstrap'
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
+import Promise from 'bluebird'
 
 import EditorField from './editor-field'
 
@@ -12,7 +13,9 @@ export default class EntryEditor extends Component {
 
     this.state = {
       editingEntry: {},
-      savingEntry: false
+      savingEntry: false,
+      addingFieldType: null,
+      addingFieldName: ''
     }
   }
 
@@ -41,11 +44,23 @@ export default class EntryEditor extends Component {
               removable={true} onRemoved={this.onFieldEdited.bind(this, 'extraInfo', name, null)} />
           })}
 
+          {this.state.addingFieldType && <FormGroup>
+            <ControlLabel>New field name</ControlLabel>
+            <InputGroup>
+              <FormControl autoFocus type='text' value={this.state.addingFieldName} onChange={this.onAddFieldChanged.bind(this)} />
+              <InputGroup.Button>
+                <Button bsStyle='success' onClick={this.onAddFieldFinished.bind(this)}>
+                  <Glyphicon glyph='plus' />
+                </Button>
+              </InputGroup.Button>
+            </InputGroup>
+          </FormGroup>}
+
           <FormGroup>
             <DropdownButton dropup id='add-field' title='Add ...'>
-              <MenuItem onClick={this.onAddFieldClicked.bind(this, true)}>Encrypted Field</MenuItem>
-              <MenuItem onClick={this.onAddFieldClicked.bind(this, false)}>Unencrypted Field</MenuItem>
-              <MenuItem onClick={this.onAddTOTPFieldClicked.bind(this)}>TOTP Field</MenuItem>
+              <MenuItem onClick={this.onAddField.bind(this, true)}>Encrypted Field</MenuItem>
+              <MenuItem onClick={this.onAddField.bind(this, false)}>Unencrypted Field</MenuItem>
+              <MenuItem onClick={this.onAddTOTPField.bind(this)}>TOTP Field</MenuItem>
             </DropdownButton>
           </FormGroup>
           <FormGroup>
@@ -59,14 +74,25 @@ export default class EntryEditor extends Component {
     }
   }
 
-  mapFields(type, callback) {
-    return _.map(_.omitBy(_.extend({}, this.props.entry[type], this.state.editingEntry[type]), (value, name) => {
-      return this.state.editingEntry[type] && this.state.editingEntry[type][name] === null
-    }), callback)
+  getEntrySnapshot() {
+    return _.extend({}, this.state.currentEntry, this.state.editingEntry, {
+      metaInfo: _.omitBy(_.extend({}, this.props.entry.metaInfo, this.state.editingEntry.metaInfo), (value, name) => {
+        return this.state.editingEntry.metaInfo && this.state.editingEntry.metaInfo[name] === null
+      }),
+      extraInfo: _.omitBy(_.extend({}, this.props.entry.extraInfo, this.state.editingEntry.extraInfo), (value, name) => {
+        return this.state.editingEntry.extraInfo && this.state.editingEntry.extraInfo[name] === null
+      })
+    })
   }
 
-  onNameChanged() {
+  mapFields(type, callback) {
+    return _.map(this.getEntrySnapshot()[type], callback)
+  }
 
+  onNameChanged(name) {
+    this.setState({
+      editingEntry: _.extend({}, this.state.editingEntry, {name})
+    })
   }
 
   onPasswordChanged(value) {
@@ -87,26 +113,39 @@ export default class EntryEditor extends Component {
     })
   }
 
-  onAddFieldClicked(encrypted) {
-    if (this.state.newFieldName) {
-      const field = encrypted ? 'extraInfo' : 'metaInfo';
-
+  onAddField(encrypted) {
+    if (!this.state.addingFieldType) {
       this.setState({
-        newFieldName: '',
-        editingEntry: _.extend(this.state.editingEntry, {
-          [field]: _.extend(this.state.editingEntry[field], {
-            [this.state.newFieldName]: ''
-          })
-        })
-      });
+        addingFieldType: encrypted ? 'extraInfo' : 'metaInfo',
+        addingFieldName: ''
+      })
     }
   }
 
-  onAddTOTPFieldClicked() {
+  onAddFieldChanged({target}) {
+    this.setState({
+      addingFieldName: target.value
+    })
+  }
+
+  onAddFieldFinished() {
+    const {addingFieldType, addingFieldName} = this.state
+
+    this.setState({
+      addingFieldType: null,
+      editingEntry: _.extend({}, this.state.editingEntry, {
+        [addingFieldType]: _.extend({}, this.state.editingEntry[addingFieldType], {
+          [addingFieldName]: ''
+        })
+      })
+    })
+  }
+
+  onAddTOTPField() {
     if (!this.state.editingEntry.TOTP) {
       this.setState({
-        editingEntry: _.extend(this.state.editingEntry, {
-          extraInfo: _.extend(this.state.editingEntry.extraInfo, {
+        editingEntry: _.extend({}, this.state.editingEntry, {
+          extraInfo: _.extend({}, this.state.editingEntry.extraInfo, {
             TOTP: ''
           })
         })
@@ -117,13 +156,18 @@ export default class EntryEditor extends Component {
   onSaveClicked() {
     this.setState({savingEntry: true});
 
-    this.passStore.encryptAndWriteEntry(this.state.entry).then( () => {
+    Promise.try( () => {
+      if (this.props.entry.name && this.state.editingEntry.name) {
+        return this.props.onEntryRenamed(this.props.name, this.getEntrySnapshot())
+      } else {
+        return this.props.onEntrySaved(this.getEntrySnapshot())
+      }
+    }).then( () => {
       this.setState({
         savingEntry: false,
-        creating: false,
         editingEntry: {}
       });
-    }).catch(alert);
+    }).catch(alert)
   }
 }
 
@@ -133,5 +177,8 @@ EntryEditor.propTyeps = {
     password: PropTypes.string,
     metaInfo: PropTypes.object,
     extraInfo: PropTypes.object
-  })
+  }),
+
+  onEntrySaved: PropTypes.func.isRequired,
+  onEntryRenamed: PropTypes.func.isRequired
 }

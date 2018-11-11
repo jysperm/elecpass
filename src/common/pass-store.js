@@ -64,7 +64,7 @@ export default class PassStore extends EventEmitter {
   }
 
   loadRepoStatus() {
-    this.gitAdapter.getRepoStatus().then( repoStatus => {
+    return this.gitAdapter.getRepoStatus().then( repoStatus => {
       this.emit('repo-status-changed', repoStatus);
     });
   }
@@ -146,6 +146,36 @@ export default class PassStore extends EventEmitter {
         extraInfo: extraInfo,
         metaInfo: metaInfo
       });
+    });
+  }
+
+  renameEntry(originalName, entry) {
+    const originalEntryFilename = path.join(this.options.passStorePath, `${originalName}.gpg`)
+    const originalMetaFilename = path.join(this.options.passStorePath, `${originalName}.meta`)
+
+    const entryFilename = path.join(this.options.passStorePath, `${entry.name}.gpg`)
+    const metaFilename = path.join(this.options.passStorePath, `${entry.name}.meta`)
+
+    return Promise.all([
+      [originalEntryFilename, entryFilename],
+      [originalMetaFilename, metaFilename]
+    ].map( ([from, to]) => {
+      return Promise.fromCallback( callback => {
+        fs.rename(from, to, callback)
+      }).catch( err => {
+        if (err.code !== 'ENOENT') {
+          throw err;
+        }
+      })
+    })).then( () => {
+      if (!this.options.disableAutoCommit) {
+        return this.gitAdapter.commitFiles([], `Rename ${originalName} to ${entry.name}`);
+      }
+    }).then( () => {
+      return this.loadRepoStatus();
+    }).then( () => {
+      this.emit('entry-removed', {name: originalName});
+      this.emit('entry-changed', entry);
     });
   }
 
