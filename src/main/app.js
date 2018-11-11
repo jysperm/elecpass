@@ -6,12 +6,12 @@ let win
 
 process.env.PATH = `${process.env.PATH}:/usr/local/bin`
 
-const menu = Menu.buildFromTemplate(require('./app-menu'))
-
 function createWindow() {
-  Menu.setApplicationMenu(menu)
-
   win = new BrowserWindow({width: 750, height: 500})
+
+  const menu = Menu.buildFromTemplate(require('./app-menu')(win))
+
+  Menu.setApplicationMenu(menu)
 
   win.loadURL(url.format({
     pathname: path.join(__dirname, '../../public/index.html'),

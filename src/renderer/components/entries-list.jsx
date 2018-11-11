@@ -1,3 +1,5 @@
+import {ipcRenderer} from 'electron'
+
 import React, {Component} from 'react';
 import {FormControl, ListGroup, ListGroupItem} from 'react-bootstrap';
 
@@ -10,6 +12,16 @@ export default class EntriesList extends Component {
     };
   }
 
+  componentDidMount() {
+    ipcRenderer.on('action', (event, message) => {
+      switch (message) {
+        case 'toggle-filter':
+          this.filterInput.focus()
+          break
+      }
+    })
+  }
+
   render() {
     const entries = _.sortBy(this.props.entries, 'name').filter( entry => {
       return _.includes(entry.lowerCase, this.state.filterByString.toLowerCase())
@@ -18,7 +30,7 @@ export default class EntriesList extends Component {
     return <div className='column-container expand'>
       <div className='shrink'>
         <FormControl
-          type='text'
+          type='text' inputRef={input => { this.filterInput = input}}
           value={this.state.filterByString}
           placeholder='Filter entries'
           onChange={({target: {value}}) => this.setState({filterByString: value})}
