@@ -47,7 +47,7 @@ export default class GitAdapter {
         return {
           isGitRepo: true
         };
-      } else if (err.stderr.match(/Not a git repository/)) {
+      } else if (err.stderr.match(/Not a git repository/i)) {
         return {
           isGitRepo: false
         };
@@ -63,7 +63,7 @@ export default class GitAdapter {
         return this.spawnGit(['add', ...files]);
       }
     }).then( () => {
-      this.spawnGit(['commit', '-a', '-m', message]);
+      return this.spawnGit(['commit', '-a', '-m', message]);
     });
   }
 
@@ -84,6 +84,10 @@ export default class GitAdapter {
       console.log('[setRemoteRepo]', err);
     }).then( () => {
       return this.spawnGit(['remote', 'add', '--fetch', '--master', 'master', 'origin', remoteRepo]);
+    }).then( () => {
+      return this.spawnGit(['branch', '--set-upstream-to=origin/master', 'master']);
+    }).then( () => {
+      return this.spawnGit(['pull', '--rebase', '--strategy-option=ours']);
     });
   }
 

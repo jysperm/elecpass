@@ -128,6 +128,14 @@ export default class PassStore extends EventEmitter {
         return Promise.fromCallback( callback => {
           fs.writeFile(metaFilename, endsWithNewLine(metaFileContent), callback);
         });
+      } else {
+        return Promise.fromCallback( callback => {
+          fs.unlink(metaFilename, callback);
+        }).catch( err => {
+          if (err.code !== 'ENOENT') {
+            throw err;
+          }
+        })
       }
     }).then( () => {
       if (!this.options.disableAutoCommit) {
@@ -140,6 +148,7 @@ export default class PassStore extends EventEmitter {
     }).then( () => {
       this.emit('entry-changed', {
         name: name,
+        lowerCase: name.toLowerCase(),
         password: password,
         realpath: fs.realpathSync(entryFilename), // TODO: Use fs.realpath instead
         relativePath: `${name}.gpg`,
@@ -175,7 +184,11 @@ export default class PassStore extends EventEmitter {
       return this.loadRepoStatus();
     }).then( () => {
       this.emit('entry-removed', {name: originalName});
-      this.emit('entry-changed', entry);
+      this.emit('entry-changed', _.extend(entry, {
+        lowerCase: entry.name.toLowerCase(),
+        realpath: fs.realpathSync(entryFilename), // TODO: Use fs.realpath instead
+        relativePath: `${entry.name}.gpg`
+      }));
     });
   }
 
@@ -196,7 +209,7 @@ export default class PassStore extends EventEmitter {
         return this.gitAdapter.commitFiles([], `Remove ${name}`);
       }
     }).then( () => {
-      this.loadRepoStatus();
+      return this.loadRepoStatus();
     }).then( () => {
       this.emit('entry-removed', {name});
     });

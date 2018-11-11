@@ -75,7 +75,7 @@ export default class EntryEditor extends Component {
   }
 
   getEntrySnapshot() {
-    return _.extend({}, this.state.currentEntry, this.state.editingEntry, {
+    return _.extend({}, this.props.entry, this.state.editingEntry, {
       metaInfo: _.omitBy(_.extend({}, this.props.entry.metaInfo, this.state.editingEntry.metaInfo), (value, name) => {
         return this.state.editingEntry.metaInfo && this.state.editingEntry.metaInfo[name] === null
       }),
@@ -158,7 +158,7 @@ export default class EntryEditor extends Component {
 
     Promise.try( () => {
       if (this.props.entry.name && this.state.editingEntry.name) {
-        return this.props.onEntryRenamed(this.props.name, this.getEntrySnapshot())
+        return this.props.onEntryRenamed(this.props.entry.name, this.getEntrySnapshot())
       } else {
         return this.props.onEntrySaved(this.getEntrySnapshot())
       }

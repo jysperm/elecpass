@@ -88,17 +88,17 @@ export default class ElecpassView extends Component {
         </Alert>}
         <ButtonGroup className='pull-left'>
           <Button bsStyle='success' onClick={this.onInsertEntry.bind(this)}>Insert</Button>
+          {repoStatus && repoStatus.isGitRepo === false && <Button bsStyle='info' onClick={this.onGitInit.bind(this)}>
+            Init Git Repo
+          </Button>}
           {repoStatus && repoStatus.remoteRepo && <Button bsStyle='info' onClick={this.onGitPull.bind(this)}>
             Git Pull{repoStatus.behind > 0 ? ` (${repoStatus.behind})` : ''}
           </Button>}
           {repoStatus && repoStatus.remoteRepo && <Button bsStyle='info' onClick={this.onGitPush.bind(this)}>
             Git Push{repoStatus.ahead > 0 ? ` (${repoStatus.ahead})` : ''}
           </Button>}
-          <Button bsStyle='warning' onClick={this.onLock.bind(this)}>Lock</Button>
+          {this.state.currentEntry && <Button bsStyle='warning' onClick={this.onLock.bind(this)}>Lock</Button>}
           <DropdownButton id='extra-settings' title=''>
-            {repoStatus && repoStatus.isGitRepo === false && <MenuItem eventKey='init-git-repo' onClick={this.onGitInit.bind(this)}>
-              Init Git Repo
-            </MenuItem>}
             <MenuItem eventKey='set-remote-repo' onClick={() => {this.setState({settingRemoteRepo: true})}}>
               Set Remote Repo ({repoStatus && repoStatus.remoteRepo})
             </MenuItem>
