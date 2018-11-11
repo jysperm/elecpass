@@ -17,7 +17,7 @@
     "lodash": "^4.17.4",
     "lru-cache": "^4.1.1",
     "mkdirp-promise": "^5.0.1",
-    "otplib": "^7.0.0-0",
+    "otplib": "7.0.0-0",
     "prop-types": "^15.6.2",
     "react": "^15.6.1",
     "react-bootstrap": "^0.31.3",

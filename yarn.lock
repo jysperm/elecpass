@@ -5406,10 +5406,10 @@ osenv@^0.1.4:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
-otplib@^7.0.0-0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/otplib/-/otplib-7.1.0.tgz#0ed5458f4381e9a528eee9d608202e2e2a505c32"
-  integrity sha1-DtVFj0OB6aUo7unWCCAuLipQXDI=
+otplib@7.0.0-0:
+  version "7.0.0-0"
+  resolved "https://registry.yarnpkg.com/otplib/-/otplib-7.0.0-0.tgz#88040a081f98e0913837aad0758ba371e6487d2b"
+  integrity sha1-iAQKCB+Y4JE4N6rQdYujceZIfSs=
   dependencies:
     thirty-two "1.0.2"
 
